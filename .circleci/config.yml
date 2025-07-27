@@ -1,0 +1,23 @@
+version: 2.1
+
+jobs:
+  test:
+    parameters:
+      job_id:
+        type: integer
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: test
+          command: |
+            docker run sophia66756/ubuntu
+
+workflows:
+  version: 2
+  matrix-test:
+    jobs:
+      - test:
+          matrix:
+            parameters:
+              job_id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
