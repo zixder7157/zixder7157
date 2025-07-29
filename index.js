@@ -29,6 +29,12 @@ const zkConnectionString = argv.zk;
 const barrierPath = argv.path;
 const participantCount = argv.count;
 const client = zookeeper.createClient(zkConnectionString);
+process.on('SIGINT', async () => {
+    // Ctrl+C
+    console.log('SIGINT: 用户中断');
+    client.close();
+    process.exit();
+});
 process.on('SIGTERM', async () => {
     // timeout docker-compose down/stop 会触发 SIGTERM 信号
     console.log('SIGTERM: 终止请求');
@@ -72,14 +78,17 @@ function enterBarrier(client, barrierPath, participantCount) {
 client.once('connected', async () => {
     try {
         await enterBarrier(client, barrierPath, participantCount);
-        // 屏障通过后，继续后续逻辑
-        console.log('进入临界区，执行后续任务。');
+        console.log('屏障已通过，等待所有参与者检测到屏障...');
+        setTimeout(() => {
+            console.log('安全退出');
+            client.close();
+            process.exit();
+        }, 1000);
     }
     catch (e) {
         console.error('屏障出错:', e);
-    }
-    finally {
         client.close();
+        process.exit(1);
     }
 });
 client.connect();
