@@ -2,6 +2,7 @@
   "name": "app",
   "type": "module",
   "dependencies": {
-    "node-zookeeper-client": "^1.1.3"
+    "node-zookeeper-client": "^1.1.3",
+    "yargs": "^18.0.0"
   }
 }
