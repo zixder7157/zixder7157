@@ -1,11 +1,60 @@
-/*!
- * express
- * Copyright(c) 2009-2013 TJ Holowaychuk
- * Copyright(c) 2013 Roman Shtylman
- * Copyright(c) 2014-2015 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-'use strict';
-
-module.exports = require('./lib/express');
+import * as zookeeper from 'node-zookeeper-client';
+const zkConnectionString = '70.36.96.27:2181';
+const barrierPath = '/barrier'; // 屏障节点路径
+const participantCount = 50; // 需要同步的进程数量
+const client = zookeeper.createClient(zkConnectionString);
+process.on('SIGTERM', async () => {
+    // timeout docker-compose down/stop 会触发 SIGTERM 信号
+    console.log('SIGTERM: 终止请求');
+    client.close();
+    process.exit();
+});
+function enterBarrier(client, barrierPath, participantCount) {
+    return new Promise((resolve, reject) => {
+        // 创建屏障父节点（如不存在）
+        client.mkdirp(barrierPath, (err) => {
+            if (err)
+                return reject(err);
+            // 每个参与者创建自己的临时子节点
+            const nodePath = `${barrierPath}/participant-`;
+            client.create(nodePath, null, zookeeper.CreateMode.EPHEMERAL_SEQUENTIAL, (err, createdPath) => {
+                if (err)
+                    return reject(err);
+                // 监听子节点数变化
+                function checkBarrier() {
+                    client.getChildren(barrierPath, (event) => {
+                        // 节点变更时再次检查
+                        checkBarrier();
+                    }, (err, children) => {
+                        if (err)
+                            return reject(err);
+                        if (children.length >= participantCount) {
+                            console.log('屏障已通过！所有参与者已就绪。');
+                            resolve();
+                        }
+                        else {
+                            console.log(`等待中，当前已就绪: ${children.length} / ${participantCount}`);
+                            // 等待 watch 触发
+                        }
+                    });
+                }
+                checkBarrier();
+            });
+        });
+    });
+}
+client.once('connected', async () => {
+    try {
+        await enterBarrier(client, barrierPath, participantCount);
+        // 屏障通过后，继续后续逻辑
+        console.log('进入临界区，执行后续任务。');
+    }
+    catch (e) {
+        console.error('屏障出错:', e);
+    }
+    finally {
+        client.close();
+    }
+});
+client.connect();
+//# sourceMappingURL=distributed_barrier.js.map
