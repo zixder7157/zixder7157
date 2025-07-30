@@ -83,7 +83,7 @@ client.once('connected', async () => {
             console.log('安全退出');
             client.close();
             process.exit();
-        }, 1000);
+        }, 2000);
     }
     catch (e) {
         console.error('屏障出错:', e);
