@@ -60,7 +60,7 @@ function enterBarrier(client, barrierPath, participantCount, participantValue) {
                 return reject(err);
             // 每个参与者创建自己的临时子节点
             const nodePath = `${barrierPath}/participant-`;
-            client.create(nodePath, Buffer.from(participantValue.toString()), zookeeper.CreateMode.EPHEMERAL_SEQUENTIAL, (err, createdPath) => {
+            client.create(nodePath, participantValue && Buffer.from(participantValue.toString()), zookeeper.CreateMode.EPHEMERAL_SEQUENTIAL, (err, createdPath) => {
                 if (err)
                     return reject(err);
                 let lastChildren = [];
