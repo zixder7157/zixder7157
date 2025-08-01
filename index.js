@@ -105,7 +105,7 @@ function enterBarrier(client, barrierPath, participantCount, participantValue) {
                             resolve();
                         }
                         else {
-                            console.log(`等待中，当前已就绪: ${children.length} / ${participantCount}`);
+                            console.log(barrierPath, `等待中，当前已就绪: ${children.length} / ${participantCount}`);
                         }
                     });
                 }
