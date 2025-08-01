@@ -52,7 +52,7 @@ function enterBarrier(client, barrierPath, participantCount) {
             client.create(nodePath, null, zookeeper.CreateMode.EPHEMERAL_SEQUENTIAL, (err, createdPath) => {
                 if (err)
                     return reject(err);
-                // 监听子节点数变化
+                let lastChildren = [];
                 function checkBarrier() {
                     client.getChildren(barrierPath, (event) => {
                         // 节点变更时再次检查
@@ -60,6 +60,14 @@ function enterBarrier(client, barrierPath, participantCount) {
                     }, (err, children) => {
                         if (err)
                             return reject(err);
+                        // 找出新增节点
+                        const added = children.filter(child => !lastChildren.includes(child));
+                        if (added.length) {
+                            added.forEach(child => {
+                                console.log('新增节点 id:', child);
+                            });
+                        }
+                        lastChildren = children; // 更新记录
                         if (children.length >= participantCount) {
                             console.log('屏障已通过！所有参与者已就绪。');
                             resolve();
