@@ -10,7 +10,7 @@ concurrency:
 
 env:
   TZ: Asia/Shanghai
-  TASK_COUNT: 600
+  TASK_COUNT: 1000
 
 jobs:
   prepare-matrix:
@@ -47,8 +47,8 @@ jobs:
           echo "Queue time: $QUEUE_TIME seconds"
 
           if [ "$QUEUE_TIME" -gt 30 ]; then
-            echo "Queue time exceeded 30 seconds, exiting workflow."
-            exit
+            echo "::error::Queue time exceeded 30 seconds."
+            exit 1
           fi
 
       - uses: actions/checkout@v4
@@ -59,7 +59,7 @@ jobs:
         name: 下载并统计速度
         run: |
           yarn
-          timeout 300s node index.js --count ${{env.TASK_COUNT}}
+          timeout 600s node index.js --count ${{env.TASK_COUNT}}
           # 下载文件并获取速度（字节/秒）
           # url=https://apt.mobileanjian.com/debs/old/com.cyjh.mobileanjian_1.8.1_default_iphoneos-arm.deb
           url=https://down-syouwan-com-1301430143.cos.ap-shanghai.myqcloud.com/myt.ipa
@@ -67,7 +67,7 @@ jobs:
           # 转换为 MB/s，保留两位小数
           speed_mb=$(awk "BEGIN {printf \"%.2f\", $speed/1024/1024}")
           echo "$speed_mb" > speed.txt
-          timeout 300s node index.js --count ${{env.TASK_COUNT}} --path /download --value $speed_mb
+          timeout 600s node index.js --count ${{env.TASK_COUNT}} --path /download --value $speed_mb
 
       - name: 上传下载速度结果
         uses: actions/upload-artifact@v4
