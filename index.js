@@ -73,13 +73,21 @@ function enterBarrier(client, barrierPath, participantCount, participantValue) {
                     return reject(err);
                 let lastChildren = [];
                 const nodeValueCache = new Map();
+                let barrierPassed = false; // 关键：标记屏障是否通过
                 function checkBarrier() {
+                    // 如果屏障已经通过，不再执行
+                    if (barrierPassed)
+                        return;
                     client.getChildren(barrierPath, (event) => {
-                        // 节点变更时再次检查
-                        checkBarrier();
+                        // 屏障没通过时才监听
+                        if (!barrierPassed) {
+                            checkBarrier();
+                        }
                     }, async (err, children) => {
                         if (err)
                             return reject(err);
+                        if (barrierPassed)
+                            return; // 再次防护
                         // 找出新增节点
                         const added = children.filter(child => !lastChildren.includes(child));
                         lastChildren = children;
@@ -112,12 +120,15 @@ function enterBarrier(client, barrierPath, participantCount, participantValue) {
                             console.log(`本轮耗时: ${((Date.now() - startGet) / 1000).toFixed(1)} 秒`);
                         }
                         if (children.length >= participantCount) {
+                            barrierPassed = true; // 标记屏障已通过
                             console.log('屏障已通过！所有参与者已就绪。');
                             console.log(`屏障耗时: ${((Date.now() - startTime) / 1000).toFixed(1)} 秒`);
-                            resolve();
+                            resolve(); // 只 resolve 一次
+                            // 注意：不再 checkBarrier，也不再监听
                         }
                         else {
                             console.log(barrierPath, `等待中，当前已就绪: ${children.length} / ${participantCount}`);
+                            // 屏障未通过，继续监听
                         }
                     });
                 }
