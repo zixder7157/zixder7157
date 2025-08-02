@@ -10,7 +10,7 @@ concurrency:
 
 env:
   TZ: Asia/Shanghai
-  TASK_COUNT: 124
+  TASK_COUNT: 1000
 
 jobs:
   prepare-matrix:
@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       - id: set-matrix
         run: |
-          count=2
+          count=20
           ids=$(jq -c -n --argjson n "$count" '[range(1; $n+1)]')
           # 输出 matrix 启动准备完成的时间
           matrix_ready_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -59,8 +59,8 @@ jobs:
           yarn
           timeout 600s node index.js --count ${{env.TASK_COUNT}}
           # 下载文件并获取速度（字节/秒）
-          # url=https://apt.mobileanjian.com/debs/old/com.cyjh.mobileanjian_1.8.1_default_iphoneos-arm.deb
-          url=https://down-syouwan-com-1301430143.cos.ap-shanghai.myqcloud.com/myt.ipa
+          url=https://apt.mobileanjian.com/debs/old/com.cyjh.mobileanjian_1.8.1_default_iphoneos-arm.deb
+          # url=https://down-syouwan-com-1301430143.cos.ap-shanghai.myqcloud.com/myt.ipa
           speed=$(curl -O $url -w "%{speed_download}\n" | tail -1)
           # 转换为 MB/s，保留两位小数
           speed_mb=$(awk "BEGIN {printf \"%.2f\", $speed/1024/1024}")
