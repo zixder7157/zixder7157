@@ -17,13 +17,17 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ids: ${{ steps.set-matrix.outputs.ids }}
+      matrix_ready_at: ${{ steps.set-matrix.outputs.matrix_ready_at }}
     steps:
       - uses: actions/checkout@v4
       - id: set-matrix
         run: |
           count=20
           ids=$(jq -c -n --argjson n "$count" '[range(1; $n+1)]')
+          # 输出 matrix 启动准备完成的时间
+          matrix_ready_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           echo "ids=$ids" >> $GITHUB_OUTPUT
+          echo "matrix_ready_at=$matrix_ready_at" >> $GITHUB_OUTPUT
 
   concurrent-jobs:
     needs: prepare-matrix
@@ -35,19 +39,13 @@ jobs:
       matrix:
         job_id: ${{ fromJson(needs.prepare-matrix.outputs.ids) }}
     steps:
-      - name: Check Workflow Queue Time
+      - name: 检查队列等待时间
         run: |
-          RUN_STARTED_AT=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              | jq -r '.run_started_at')
-
-          echo 'RUN_STARTED_AT: $(date -d "$RUN_STARTED_AT" +"%Y-%m-%d %H:%M:%S")'
-
-          QUEUE_TIME=$(( $(date -u +%s) - $(date -d "$RUN_STARTED_AT" +%s) ))
-          echo "Queue time: $QUEUE_TIME seconds"
-
-          if [ "$QUEUE_TIME" -gt 180 ]; then
-            echo "::error::Queue time exceeded 180 seconds."
+          MATRIX_READY_AT="${{ needs.prepare-matrix.outputs.matrix_ready_at }}"
+          QUEUE_TIME=$(( $(date -u +%s) - $(date -d "$MATRIX_READY_AT" +%s) ))
+          echo "Queue time since matrix ready: $QUEUE_TIME seconds"
+          if [ "$QUEUE_TIME" -gt 60 ]; then
+            echo "::error::Queue time since matrix ready exceeded 60 seconds."
             exit 1
           fi
 
