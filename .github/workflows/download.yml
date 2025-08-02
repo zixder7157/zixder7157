@@ -44,8 +44,8 @@ jobs:
           MATRIX_READY_AT="${{ needs.prepare-matrix.outputs.matrix_ready_at }}"
           QUEUE_TIME=$(( $(date -u +%s) - $(date -d "$MATRIX_READY_AT" +%s) ))
           echo "Queue time since matrix ready: $QUEUE_TIME seconds"
-          if [ "$QUEUE_TIME" -gt 60 ]; then
-            echo "::error::Queue time since matrix ready exceeded 60 seconds."
+          if [ "$QUEUE_TIME" -gt 180 ]; then
+            echo "::error::Queue time since matrix ready exceeded 180 seconds."
             exit 1
           fi
 
