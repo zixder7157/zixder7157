@@ -46,8 +46,8 @@ jobs:
           QUEUE_TIME=$(( $(date -u +%s) - $(date -d "$RUN_STARTED_AT" +%s) ))
           echo "Queue time: $QUEUE_TIME seconds"
 
-          if [ "$QUEUE_TIME" -gt 60 ]; then
-            echo "::error::Queue time exceeded 60 seconds."
+          if [ "$QUEUE_TIME" -gt 180 ]; then
+            echo "::error::Queue time exceeded 180 seconds."
             exit 1
           fi
 
