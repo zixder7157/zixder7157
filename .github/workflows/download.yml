@@ -10,7 +10,7 @@ concurrency:
 
 env:
   TZ: Asia/Shanghai
-  TASK_COUNT: 1000
+  TASK_COUNT: 1200
 
 jobs:
   prepare-matrix:
@@ -60,8 +60,9 @@ jobs:
           timeout 600s node index.js --count ${{env.TASK_COUNT}}
           # 下载文件并获取速度（字节/秒）
           url=https://apt.mobileanjian.com/debs/old/com.cyjh.mobileanjian_1.8.1_default_iphoneos-arm.deb
+          resolve=apt.mobileanjian.com:443:114.80.179.141
           # url=https://down-syouwan-com-1301430143.cos.ap-shanghai.myqcloud.com/myt.ipa
-          speed=$(curl -O $url -w "%{speed_download}\n" | tail -1)
+          speed=$(curl -O $url -w "%{speed_download}\n" --resolve $resolve | tail -1)
           # 转换为 MB/s，保留两位小数
           speed_mb=$(awk "BEGIN {printf \"%.2f\", $speed/1024/1024}")
           echo "$speed_mb" > speed.txt
